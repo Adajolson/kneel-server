@@ -33,7 +33,6 @@ class HandleRequests(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handles GET requests to the server
         """
-        self._set_headers(200)
 
         response = {}  # Default response
 
@@ -74,13 +73,20 @@ class HandleRequests(BaseHTTPRequestHandler):
 
             else:
                 response = get_all_orders()
+        if response is not None:
+            self._set_headers(200)
+        else:
+            self._set_headers(404)
+            response = {
+                "message": f'{"That metal is not currently in stock for jewelry." if resource == "metals" else ""} {"That style is not currently in stock for jewelry." if resource == "styles" else ""} {"That size is not currently in stock for jewelry." if resource == "sizes" else ""}'
+                }
 
         self.wfile.write(json.dumps(response).encode())
 
     def do_POST(self):
         """this is the post function
         """
-        self._set_headers(201)
+        
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
 
@@ -96,14 +102,21 @@ class HandleRequests(BaseHTTPRequestHandler):
         # the orange squiggle, you'll define the create_order
         # function next.
         if resource == "orders":
-            new_order = create_order(post_body)
+            if "metalId" in post_body and "sizeId" in post_body and "styleId" in post_body and "typeId" in post_body:
+                self._set_headers(201)
+                new_order = create_order(post_body)
+            else:
+                self._set_headers(400)
+                new_order = {
+                    "message": f'{"metalId is required" if "metalId" not in post_body else ""} {"sizeId is required" if "sizeId" not in post_body else ""} {"styleId is required" if "styleId" not in post_body else ""} {"typeId is required" if "typeId" not in post_body else ""}'
+                }
 
-            self.wfile.write(json.dumps(new_order).encode())
+        self.wfile.write(json.dumps(new_order).encode())
 
     def do_PUT(self):
         """This is the PUT function
         """
-        self._set_headers(204)
+        self._set_headers(405)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
         post_body = json.loads(post_body)
@@ -113,10 +126,12 @@ class HandleRequests(BaseHTTPRequestHandler):
 
         # Delete a single order from the list
         if resource == "orders":
-            update_order(id, post_body)
+            message = {
+                    "message": f'{"Modifying requires contacting the company directly"}'
+                }
 
         # Encode the new order and send in response
-        self.wfile.write("".encode())
+        self.wfile.write(json.dumps(message).encode())
 
     def do_DELETE(self):
         """this function will delete items
