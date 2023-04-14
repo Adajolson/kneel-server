@@ -1,3 +1,8 @@
+from .size_requests import get_single_size
+from .style_requests import get_single_style
+from .metal_requests import get_single_metal
+from .type_requests import get_single_type
+
 ORDERS = [
     {
         "id": 1,
@@ -27,7 +32,14 @@ def get_single_order(id):
         # instead of the dot notation that JavaScript used.
         if order["id"] == id:
             requested_order = order
-
+            requested_order["size"] = get_single_size(requested_order["sizeId"])
+            requested_order.pop("sizeId", None)
+            requested_order["style"] = get_single_style(requested_order["styleId"])
+            requested_order.pop("styleId", None)
+            requested_order["metal"] = get_single_metal(requested_order["metalId"])
+            requested_order.pop("metalId", None)
+            requested_order["type"] = get_single_type(requested_order["typeId"])
+            requested_order.pop("typeId", None)
     return requested_order
 
 def create_order(order):
