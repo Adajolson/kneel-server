@@ -1,3 +1,6 @@
+import sqlite3
+import json
+from models import Order
 from .size_requests import get_single_size
 from .style_requests import get_single_style
 from .metal_requests import get_single_metal
@@ -6,18 +9,59 @@ from .type_requests import get_single_type
 ORDERS = [
     {
         "id": 1,
-        "metalId": 3,
-        "sizeId": 2,
-        "styleId": 3,
-        "typeId": 1,
+        "metal_id": 3,
+        "size_id": 2,
+        "style_id": 3,
+        "type_id": 1,
         "timestamp": 1614659931693
     }
 ]
 
+# def get_all_orders():
+#     """This function gets all orders
+#     """
+#     return ORDERS
+
 def get_all_orders():
-    """This function gets all orders
-    """
-    return ORDERS
+    # Open a connection to the database
+    with sqlite3.connect('./kneeldiamonds.sqlite3') as conn:
+
+        # Just use these. It's a Black Box.
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        SELECT
+            o.id,
+            o.metal_id,
+            o.size_id,
+            o.style_id,
+            o.type_id,
+            o.timestamp
+        FROM orders o
+        """)
+
+        # Initialize an empty list to hold all order representations
+        orders = []
+
+        # Convert rows of data into a Python list
+        dataset = db_cursor.fetchall()
+
+        # Iterate list of data returned from database
+        for row in dataset:
+
+            # Create an order instance from the current row.
+            # Note that the database fields are specified in
+            # exact order of the parameters defined in the
+            # order class above.
+            order = Order(row['id'], row['metal_id'], row['size_id'],
+                            row['style_id'], row['type_id'],
+                            row['timestamp'])
+
+            orders.append(order.__dict__)
+
+    return orders
 
 def get_single_order(id):
     """This function finds a single order item
@@ -32,14 +76,14 @@ def get_single_order(id):
         # instead of the dot notation that JavaScript used.
         if order["id"] == id:
             requested_order = order
-            requested_order["size"] = get_single_size(requested_order["sizeId"])
-            requested_order.pop("sizeId", None)
-            requested_order["style"] = get_single_style(requested_order["styleId"])
-            requested_order.pop("styleId", None)
-            requested_order["metal"] = get_single_metal(requested_order["metalId"])
-            requested_order.pop("metalId", None)
-            requested_order["type"] = get_single_type(requested_order["typeId"])
-            requested_order.pop("typeId", None)
+            requested_order["size"] = get_single_size(requested_order["size_id"])
+            requested_order.pop("size_id", None)
+            requested_order["style"] = get_single_style(requested_order["style_id"])
+            requested_order.pop("style_id", None)
+            requested_order["metal"] = get_single_metal(requested_order["metal_id"])
+            requested_order.pop("metal_id", None)
+            requested_order["type"] = get_single_type(requested_order["type_id"])
+            requested_order.pop("type_id", None)
     return requested_order
 
 def create_order(order):
