@@ -2,7 +2,7 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from views import get_all_metals, get_all_sizes, get_all_styles, get_all_types, get_all_orders
 from views import get_single_type, get_single_metal, get_single_size, get_single_style
-from views import create_order, get_single_order, delete_order, update_order
+from views import create_order, get_single_order, delete_order, update_metal
 
 class HandleRequests(BaseHTTPRequestHandler):
     """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
@@ -102,21 +102,39 @@ class HandleRequests(BaseHTTPRequestHandler):
         # the orange squiggle, you'll define the create_order
         # function next.
         if resource == "orders":
-            if "metalId" in post_body and "sizeId" in post_body and "styleId" in post_body and "typeId" in post_body:
+            if "metal_id" in post_body and "size_id" in post_body and "style_id" in post_body and "type_id" in post_body:
                 self._set_headers(201)
                 new_order = create_order(post_body)
             else:
                 self._set_headers(400)
                 new_order = {
-                    "message": f'{"metalId is required" if "metalId" not in post_body else ""} {"sizeId is required" if "sizeId" not in post_body else ""} {"styleId is required" if "styleId" not in post_body else ""} {"typeId is required" if "typeId" not in post_body else ""}'
+                    "message": f'{"metal_id is required" if "metal_id" not in post_body else ""} {"size_id is required" if "size_id" not in post_body else ""} {"style_id is required" if "style_id" not in post_body else ""} {"type_id is required" if "type_id" not in post_body else ""}'
                 }
 
         self.wfile.write(json.dumps(new_order).encode())
 
+    # def do_PUT(self):
+    #     """This is the PUT function
+    #     """
+    #     self._set_headers(405)
+    #     content_len = int(self.headers.get('content-length', 0))
+    #     post_body = self.rfile.read(content_len)
+    #     post_body = json.loads(post_body)
+
+    #     # Parse the URL
+    #     (resource, id) = self.parse_url(self.path)
+
+    #     # Delete a single order from the list
+    #     if resource == "orders":
+    #         message = {
+    #                 "message": f'{"Modifying requires contacting the company directly"}'
+    #             }
+
+    #     # Encode the new order and send in response
+    #     self.wfile.write(json.dumps(message).encode())
+
     def do_PUT(self):
-        """This is the PUT function
-        """
-        self._set_headers(405)
+        """This method updates an existing dictionary"""
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
         post_body = json.loads(post_body)
@@ -124,14 +142,18 @@ class HandleRequests(BaseHTTPRequestHandler):
         # Parse the URL
         (resource, id) = self.parse_url(self.path)
 
-        # Delete a single order from the list
-        if resource == "orders":
-            message = {
-                    "message": f'{"Modifying requires contacting the company directly"}'
-                }
+        success = False
 
-        # Encode the new order and send in response
-        self.wfile.write(json.dumps(message).encode())
+        if resource == "metals":
+            success = update_metal(id, post_body)
+        # rest of the elif's
+
+        if success:
+            self._set_headers(204)
+        else:
+            self._set_headers(404)
+
+        self.wfile.write("".encode())
 
     def do_DELETE(self):
         """this function will delete items
